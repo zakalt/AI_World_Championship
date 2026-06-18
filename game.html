@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Football Simulator</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',sans-serif;background:#0d1117;color:#e6edf3;min-height:100vh}
+  header{background:linear-gradient(135deg,#1a7f37,#2ea043);padding:18px 28px;display:flex;align-items:center;gap:14px}
+  header h1{font-size:1.5rem;font-weight:700;letter-spacing:.5px}
+  header span{font-size:2rem}
+  nav{display:flex;gap:0;background:#161b22;border-bottom:1px solid #30363d}
+  nav button{padding:12px 24px;background:none;border:none;color:#8b949e;cursor:pointer;font-size:.95rem;border-bottom:3px solid transparent;transition:.2s}
+  nav button.active{color:#58a6ff;border-bottom-color:#58a6ff}
+  nav button:hover{color:#e6edf3}
+  .tab{display:none;padding:24px;max-width:1100px;margin:0 auto}
+  .tab.active{display:block}
+  .card{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;margin-bottom:18px}
+  h2{font-size:1.15rem;color:#58a6ff;margin-bottom:14px;font-weight:600}
+  h3{font-size:1rem;color:#e6edf3;margin-bottom:10px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+  label{font-size:.82rem;color:#8b949e;display:block;margin-bottom:4px}
+  input[type=number],input[type=text],select{width:100%;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#e6edf3;padding:7px 10px;font-size:.9rem;outline:none}
+  input:focus,select:focus{border-color:#58a6ff}
+  .range-row{display:flex;align-items:center;gap:10px}
+  .range-row input[type=range]{flex:1;accent-color:#2ea043}
+  .range-val{min-width:28px;text-align:right;font-size:.88rem;color:#2ea043;font-weight:600}
+  .btn{padding:10px 22px;border:none;border-radius:7px;cursor:pointer;font-weight:600;font-size:.92rem;transition:.18s}
+  .btn-green{background:#2ea043;color:#fff}.btn-green:hover{background:#3fb950}
+  .btn-blue{background:#1f6feb;color:#fff}.btn-blue:hover{background:#388bfd}
+  .btn-red{background:#da3633;color:#fff}.btn-red:hover{background:#f85149}
+  .btn-sm{padding:5px 13px;font-size:.82rem}
+  .scoreboard{display:flex;align-items:center;justify-content:center;gap:30px;padding:22px;background:#0d1117;border-radius:10px;margin-bottom:16px}
+  .team-score-name{font-size:1.1rem;font-weight:700;text-align:center;min-width:110px}
+  .score-box{font-size:3.2rem;font-weight:800;color:#2ea043;min-width:70px;text-align:center}
+  .vs{font-size:1rem;color:#8b949e}
+  .stats-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:6px 12px;font-size:.88rem}
+  .stat-label{text-align:center;color:#8b949e;font-size:.8rem}
+  .stat-home{text-align:right;color:#58a6ff;font-weight:600}
+  .stat-away{text-align:left;color:#f0883e;font-weight:600}
+  .bar-wrap{display:flex;height:7px;border-radius:4px;overflow:hidden;margin:2px 0}
+  .bar-h{background:#58a6ff}
+  .bar-a{background:#f0883e}
+  table{width:100%;border-collapse:collapse;font-size:.88rem}
+  th{background:#21262d;color:#8b949e;padding:9px 12px;text-align:left;font-weight:600;font-size:.8rem}
+  td{padding:8px 12px;border-bottom:1px solid #21262d}
+  tr:hover td{background:#21262d}
+  .pts{font-weight:700;color:#2ea043}
+  .pos-1{color:#f1c40f;font-weight:700}
+  .pos-2{color:#bdc3c7;font-weight:700}
+  .pos-3{color:#e67e22;font-weight:700}
+  .team-row{display:flex;align-items:center;justify-content:space-between;background:#0d1117;border-radius:8px;padding:10px 14px;margin-bottom:8px}
+  .team-badge{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;color:#fff;flex-shrink:0}
+  .fixture{display:flex;align-items:center;justify-content:space-between;background:#0d1117;border-radius:8px;padding:10px 16px;margin-bottom:6px;font-size:.88rem}
+  .fixture-score{font-weight:700;color:#2ea043;min-width:50px;text-align:center}
+  .fixture-team{min-width:120px}
+  .fixture-home{text-align:right}
+  .fixture-away{text-align:left}
+  .round-title{color:#58a6ff;font-weight:600;margin:14px 0 6px;font-size:.9rem}
+  .winner-badge{background:#2ea043;color:#fff;padding:2px 8px;border-radius:12px;font-size:.75rem;font-weight:600;margin-left:6px}
+  .growth-up{color:#3fb950}
+  .growth-dn{color:#f85149}
+  .growth-neu{color:#8b949e}
+  .tactic-btn{padding:5px 12px;border:1px solid #30363d;background:#0d1117;color:#8b949e;border-radius:5px;cursor:pointer;font-size:.8rem;transition:.15s}
+  .tactic-btn.sel{border-color:#2ea043;color:#2ea043;background:#0d2810}
+  .log-box{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px;font-family:monospace;font-size:.8rem;max-height:260px;overflow-y:auto;line-height:1.7}
+  .log-goal{color:#f1c40f}.log-info{color:#8b949e}.log-sub{color:#a371f7}.log-tactic{color:#58a6ff}
+  .tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.72rem;font-weight:600}
+  .tag-att{background:#2d1a00;color:#f0883e}.tag-def{background:#0d1f2d;color:#58a6ff}.tag-bal{background:#1a2d1a;color:#3fb950}
+  .spinner{display:inline-block;width:18px;height:18px;border:2px solid #30363d;border-top-color:#58a6ff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .section-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+  .info-chip{background:#21262d;border-radius:20px;padding:4px 12px;font-size:.8rem;color:#8b949e}
+  ::-webkit-scrollbar{width:6px;height:6px}
+  ::-webkit-scrollbar-track{background:#0d1117}
+  ::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
+</style>
+</head>
+<body>
+
+<header>
+  <span>⚽</span>
+  <div>
+    <h1>AI Football Simulator</h1>
+    <div style="font-size:.8rem;opacity:.8">Tactics · Learning · Tournaments</div>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="showTab('match')">⚽ Match</button>
+  <button onclick="showTab('league')">🏆 League</button>
+  <button onclick="showTab('tournament')">🥊 Cup</button>
+  <button onclick="showTab('teams')">🛠 Teams</button>
+</nav>
+
+<div id="tab-match" class="tab active">
+  <div class="grid2">
+    <div class="card">
+      <h2>Home Team</h2>
+      <div id="home-picker"></div>
+    </div>
+    <div class="card">
+      <h2>Away Team</h2>
+      <div id="away-picker"></div>
+    </div>
+  </div>
+  <div class="section-actions">
+    <button class="btn btn-green" onclick="runMatch()">▶ Simulate Match</button>
+    <span class="info-chip" id="match-seed-info">Seed: random</span>
+  </div>
+  <div id="match-result"></div>
+</div>
+
+<div id="tab-league" class="tab">
+  <div class="card">
+    <h2>League Settings</h2>
+    <div class="grid2" style="margin-bottom:14px">
+      <div>
+        <label>Season mode</label>
+        <select id="league-mode">
+          <option value="season">Home &amp; Away (full season)</option>
+          <option value="round_robin">Single Round-Robin</option>
+        </select>
+      </div>
+      <div>
+        <label>Learning (teams improve each match)</label>
+        <select id="league-learning">
+          <option value="1">Enabled</option>
+          <option value="0">Disabled</option>
+        </select>
+      </div>
+    </div>
+    <div class="section-actions">
+      <button class="btn btn-green" onclick="runLeague()">▶ Run Season</button>
+    </div>
+  </div>
+  <div id="league-result"></div>
+</div>
+
+<div id="tab-tournament" class="tab">
+  <div class="card">
+    <h2>Knockout Cup</h2>
+    <p style="color:#8b949e;font-size:.88rem;margin-bottom:14px">All teams enter a single-elimination bracket. Draws go to penalties.</p>
+    <button class="btn btn-green" onclick="runTournament()">▶ Draw &amp; Play</button>
+  </div>
+  <div id="tournament-result"></div>
+</div>
+
+<div id="tab-teams" class="tab">
+  <div class="card">
+    <h2>Team Roster</h2>
+    <p style="color:#8b949e;font-size:.85rem;margin-bottom:16px">Edit team attributes — changes are reflected immediately in all simulations.</p>
+    <div id="team-editor"></div>
+    <button class="btn btn-blue" style="margin-top:12px" onclick="addTeam()">+ Add Team</button>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+//  Seeded RNG (Mulberry32)
+// ─────────────────────────────────────────────
+function makeRng(seed) {
+  let s = seed >>> 0;
+  return function() {
+    s += 0x6D2B79F5;
+    let t = Math.imul(s ^ s >>> 15, 1 | s);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+// ─────────────────────────────────────────────
+//  Team definitions
+// ─────────────────────────────────────────────
+const COLORS = ['#e74c3c','#3498db','#2ecc71','#9b59b6','#f39c12','#1abc9c','#e67e22','#e91e63'];
+let teams = [
+  {name:'Brazil',    rating:70, tactic:'attacking', policy:'strength_aware', pace:78,passing:72,shooting:80,defending:60,stamina:70},
+  {name:'Germany',   rating:65, tactic:'balanced',  policy:'strength_aware', pace:68,passing:82,shooting:68,defending:68,stamina:74},
+  {name:'Italy',     rating:60, tactic:'defensive', policy:'strength_aware', pace:55,passing:65,shooting:58,defending:85,stamina:80},
+  {name:'France',    rating:68, tactic:'balanced',  policy:'strength_aware', pace:72,passing:75,shooting:72,defending:72,stamina:68},
+  {name:'Argentina', rating:55, tactic:'attacking', policy:'strength_aware', pace:85,passing:60,shooting:65,defending:50,stamina:62},
+  {name:'Spain',     rating:50, tactic:'balanced',  policy:'strength_aware', pace:58,passing:58,shooting:55,defending:58,stamina:60},
+];
+
+function teamColor(i){ return COLORS[i % COLORS.length]; }
+function cloneTeams(){ return teams.map(t=>({...t})); }
+
+// ─────────────────────────────────────────────
+//  Simulation engine (mirrors Python logic)
+// ─────────────────────────────────────────────
+const TACTIC_ATK = {attacking:1.13, balanced:1.00, defensive:0.88};
+const TACTIC_DEF = {attacking:0.88, balanced:1.00, defensive:1.12};
+const PASS_RANGE  = {attacking:[6,9], balanced:[5,7], defensive:[4,6]};
+const SUB_BOOSTS  = {attacker:2.5, midfielder:1.2, defender:0.0};
+const HOME_ADV    = 1.05;
+
+function staminaFactor(team, minute){
+  if(minute <= 70) return 1.0;
+  const fatigue = (minute - 70) / 90 * (1 - team.stamina/100);
+  return Math.max(0.75, 1 - fatigue);
+}
+function passCompletionRate(team, minute){
+  const tacMod = {defensive:1.04,balanced:1.00,attacking:0.94}[team.tactic]||1;
+  const base = 0.60 + (team.passing/100)*0.32;
+  return Math.min(0.93, base * tacMod * staminaFactor(team,minute));
+}
+function shotOnTargetProb(team, opp, minute){
+  const base = 0.38;
+  const sb = (team.shooting - 65)*0.003;
+  const dp = (opp.defending - 65)*0.0025*(TACTIC_DEF[opp.tactic]||1);
+  return Math.max(0.14, Math.min(0.62, (base+sb-dp)*staminaFactor(team,minute)));
+}
+function goalProb(team, opp, minute){
+  const base = 0.22;
+  const sb = (team.shooting - 65)*0.0028;
+  const dp = (opp.defending - 65)*0.0028*(TACTIC_DEF[opp.tactic]||1);
+  return Math.max(0.06, Math.min(0.40, (base+sb-dp)*staminaFactor(team,minute)));
+}
+function attackChance(att, def, atkBonus, defBonus, minute){
+  const atkStr = att.rating + atkBonus;
+  const defStr = def.rating + defBonus;
+  const ratio  = atkStr / Math.max(defStr,1);
+  const ratingMod = Math.max(0.70, Math.min(1.40, ratio*0.90+0.10));
+  const tacMod = TACTIC_ATK[att.tactic]||1;
+  const paceMod = 1 + (att.pace-65)*0.0008;
+  return 0.20 * ratingMod * tacMod * paceMod * staminaFactor(att,minute);
+}
+
+// Strength-aware AI policy (mirrors Python StrengthAwarePolicy)
+function preMatchTactic(team, opp){
+  const ratio = team.rating / Math.max(opp.rating,1);
+  if(ratio >= 1.08) return 'attacking';
+  if(ratio >= 0.93) return 'balanced';
+  return 'defensive';
+}
+function inGameDecision(team, state, minute){
+  const {ourGoals,oppGoals,ourPoss,ourSoT} = state;
+  const diff = ourGoals - oppGoals;
+  const actions = {};
+  if(minute < 60){
+    if(diff <= -2) actions.tactic='attacking';
+  } else if(minute < 75){
+    if(diff >= 2)      actions.tactic='defensive';
+    else if(diff >= 0) actions.tactic='balanced';
+    else               actions.tactic='attacking';
+  } else if(minute < 85){
+    if(diff >= 1){ actions.tactic='defensive'; if(diff===1&&minute>=80) actions.sub='defender'; }
+    else { actions.tactic='attacking'; if(ourSoT<2) actions.sub='attacker'; }
+  } else {
+    if(diff >= 2)      { actions.tactic='defensive'; }
+    else if(diff >= 1) { actions.tactic='defensive'; actions.sub='defender'; }
+    else if(diff === 0){ actions.tactic='attacking'; if(ourSoT<3) actions.sub='attacker'; }
+    else               { actions.tactic='attacking'; actions.sub='attacker'; }
+  }
+  return actions;
+}
+
+function simulateMatch(homeT, awayT, rng, collectLog=false){
+  const h = {...homeT}, a = {...awayT};
+  const boosts = {home:0, away:0};
+  const subs   = {home:0, away:0};
+  const stats  = {
+    home:{goals:0,shots:0,sot:0,possession:0,passAtt:0,passComp:0},
+    away:{goals:0,shots:0,sot:0,possession:0,passAtt:0,passComp:0},
+  };
+  const log = [];
+
+  // Pre-match tactic
+  h.tactic = preMatchTactic(h,a);
+  a.tactic = preMatchTactic(a,h);
+  if(collectLog){
+    log.push({min:0,type:'tactic',msg:`${h.name} set tactic: ${h.tactic}`});
+    log.push({min:0,type:'tactic',msg:`${a.name} set tactic: ${a.tactic}`});
+  }
+
+  for(let min=1; min<=90; min++){
+    // AI tick every 5 min or key moments
+    if(min%5===0 || [60,75,85].includes(min)){
+      for(const [side,team,opp,oppSide] of [['home',h,a,'away'],['away',a,h,'home']]){
+        const poss = stats[side].possession;
+        const state = {
+          ourGoals: stats[side].goals, oppGoals: stats[oppSide].goals,
+          ourPoss: min>1 ? poss/(min-1)*100 : 50,
+          ourSoT: stats[side].sot,
+        };
+        const act = inGameDecision(team, state, min);
+        if(act.tactic && act.tactic!==team.tactic){
+          team.tactic = act.tactic;
+          if(collectLog) log.push({min,type:'tactic',msg:`${team.name} switches to ${act.tactic}`});
+        }
+        if(act.sub && subs[side]<3){
+          boosts[side] += SUB_BOOSTS[act.sub]||0;
+          subs[side]++;
+          if(collectLog) log.push({min,type:'sub',msg:`${team.name} makes ${act.sub} sub`});
+        }
+      }
+    }
+
+    // Possession
+    const hw = (h.rating+boosts.home)*(TACTIC_ATK[h.tactic]||1)*HOME_ADV;
+    const aw = (a.rating+boosts.away)*(TACTIC_ATK[a.tactic]||1);
+    const attSide = rng() < hw/(hw+aw) ? 'home' : 'away';
+    const defSide = attSide==='home'?'away':'home';
+    const att = attSide==='home'?h:a;
+    const def = defSide==='home'?h:a;
+    const atkBonus = boosts[attSide], defBonus = boosts[defSide];
+
+    stats[attSide].possession++;
+
+    // Pass chain
+    const [lo,hi] = PASS_RANGE[att.tactic]||[5,7];
+    const attempts = lo + Math.floor(rng()*(hi-lo+1));
+    const pcr = passCompletionRate(att,min);
+    let completed=0;
+    for(let p=0;p<attempts;p++) if(rng()<pcr) completed++;
+    stats[attSide].passAtt += attempts;
+    stats[attSide].passComp += completed;
+
+    // Shot
+    const chainQ = completed/Math.max(attempts,1);
+    let shotP = attackChance(att,def,atkBonus,defBonus,min) * (0.55+0.90*chainQ);
+    if(rng()<shotP){
+      stats[attSide].shots++;
+      if(rng()<shotOnTargetProb(att,def,min)){
+        stats[attSide].sot++;
+        if(rng()<goalProb(att,def,min)){
+          stats[attSide].goals++;
+          if(collectLog) log.push({min,type:'goal',msg:`⚽ GOAL! ${att.name} score! (${stats.home.goals}-${stats.away.goals})`});
+        }
+      }
+    }
+  }
+
+  const totalPoss = stats.home.possession+stats.away.possession||1;
+  const homePoss = Math.round(stats.home.possession/totalPoss*1000)/10;
+  stats.home.possession = homePoss;
+  stats.away.possession = Math.round((100-homePoss)*10)/10;
+  for(const s of ['home','away']){
+    stats[s].passAcc = stats[s].passAtt ? Math.round(stats[s].passComp/stats[s].passAtt*1000)/10 : 0;
+  }
+  return {homeGoals:stats.home.goals, awayGoals:stats.away.goals, stats, log, homeTactic:h.tactic, awayTactic:a.tactic};
+}
+
+// ─────────────────────────────────────────────
+//  Learning engine (mirrors Python learning.py)
+// ─────────────────────────────────────────────
+function learnTeam(team, res, side, rng){
+  const oppSide = side==='home'?'away':'home';
+  const s  = res.stats[side];
+  const os = res.stats[oppSide];
+  const noise = ()=>rng()*0.10-0.05;
+
+  const matchAcc  = s.passAcc/100;
+  const passDelta = (matchAcc - 0.78)*0.40 + noise();
+
+  const shots = Math.max(s.shots,1);
+  const conv  = s.goals/shots;
+  const shootDelta = (conv-0.10)*1.75 + noise();
+
+  const oppShots = Math.max(os.shots,1);
+  const oppConv  = os.goals/oppShots;
+  const defDelta = (0.10-oppConv)*1.75 + noise();
+
+  const won  = res[side+'Goals'] > res[oppSide+'Goals'];
+  const lost = res[side+'Goals'] < res[oppSide+'Goals'];
+  const paceDelta = won ? 0.12+noise() : lost ? -0.06+noise() : noise();
+  const stamDelta = (s.possession>52 ? 0.075 : 0) + noise();
+
+  const ratingDelta = (passDelta*0.25+shootDelta*0.30+defDelta*0.25+paceDelta*0.10+stamDelta*0.10)*1.25;
+
+  const cap = (stat,d) => {
+    const room = (99-stat)/69;
+    return Math.max(30,Math.min(99, stat + (d>0?d*Math.max(0.1,room):d)));
+  };
+  team.passing   = cap(team.passing,   passDelta);
+  team.shooting  = cap(team.shooting,  shootDelta);
+  team.defending = cap(team.defending, defDelta);
+  team.pace      = cap(team.pace,      paceDelta);
+  team.stamina   = cap(team.stamina,   stamDelta);
+  team.rating    = cap(team.rating,    ratingDelta);
+  return {passing:passDelta,shooting:shootDelta,defending:defDelta,pace:paceDelta,stamina:stamDelta,rating:ratingDelta};
+}
+
+// ─────────────────────────────────────────────
+//  Tab navigation
+// ─────────────────────────────────────────────
+function showTab(id){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  event.target.classList.add('active');
+  if(id==='teams') renderTeamEditor();
+}
+
+// ─────────────────────────────────────────────
+//  Team picker (match tab)
+// ─────────────────────────────────────────────
+function renderPickers(){
+  ['home','away'].forEach(side=>{
+    const el = document.getElementById(side+'-picker');
+    el.innerHTML = teams.map((t,i)=>`
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px;border-radius:7px;background:#0d1117;margin-bottom:6px;border:2px solid ${window[side+'Sel']===i?'#2ea043':'#21262d'}">
+        <input type="radio" name="${side}-team" value="${i}" ${window[side+'Sel']===i?'checked':''} onchange="window['${side}Sel']=${i};renderPickers()" style="accent-color:#2ea043">
+        <div class="team-badge" style="background:${teamColor(i)}">${t.name[0]}</div>
+        <div>
+          <div style="font-weight:600">${t.name}</div>
+          <div style="font-size:.75rem;color:#8b949e">⭐${t.rating} &nbsp;
+            <span class="tag tag-${t.tactic==='attacking'?'att':t.tactic==='defensive'?'def':'bal'}">${t.tactic}</span>
+          </div>
+        </div>
+        <div style="margin-left:auto;font-size:.75rem;color:#8b949e;text-align:right">
+          👟${t.pace} 📧${t.passing}<br>🎯${t.shooting} 🛡️${t.defending}
+        </div>
+      </label>
+    `).join('');
+  });
+}
+window.homeSel=0; window.awaySel=1;
+renderPickers();
+
+// ─────────────────────────────────────────────
+//  Match simulation UI
+// ─────────────────────────────────────────────
+function runMatch(){
+  const h = {...teams[window.homeSel]};
+  const a = {...teams[window.awaySel]};
+  if(h.name===a.name){ alert('Select different teams!'); return; }
+  const seed = Date.now();
+  const rng  = makeRng(seed);
+  document.getElementById('match-seed-info').textContent = `Seed: ${seed}`;
+  const res = simulateMatch(h, a, rng, true);
+  renderMatchResult(h, a, res);
+}
+
+function statBar(hv, av, maxV){
+  const total = hv+av||1;
+  const hp = Math.round(hv/total*100);
+  return `<div class="bar-wrap"><div class="bar-h" style="width:${hp}%"></div><div class="bar-a" style="width:${100-hp}%"></div></div>`;
+}
+
+function renderMatchResult(h, a, res){
+  const s = res.stats;
+  const el = document.getElementById('match-result');
+  el.innerHTML = `
+    <div class="card">
+      <div class="scoreboard">
+        <div class="team-score-name">
+          <div class="team-badge" style="background:${teamColor(window.homeSel)};margin:0 auto 6px;width:48px;height:48px;font-size:1.3rem">${h.name[0]}</div>
+          ${h.name}
+          <div style="margin-top:4px"><span class="tag tag-${res.homeTactic==='attacking'?'att':res.homeTactic==='defensive'?'def':'bal'}">${res.homeTactic}</span></div>
+        </div>
+        <div style="text-align:center">
+          <div class="score-box">${res.homeGoals} – ${res.awayGoals}</div>
+          <div style="font-size:.78rem;color:#8b949e;margin-top:4px">FULL TIME</div>
+        </div>
+        <div class="team-score-name">
+          <div class="team-badge" style="background:${teamColor(window.awaySel)};margin:0 auto 6px;width:48px;height:48px;font-size:1.3rem">${a.name[0]}</div>
+          ${a.name}
+          <div style="margin-top:4px"><span class="tag tag-${res.awayTactic==='attacking'?'att':res.awayTactic==='defensive'?'def':'bal'}">${res.awayTactic}</span></div>
+        </div>
+      </div>
+      <div class="grid2">
+        <div>
+          <h3>Match Stats</h3>
+          <div class="stats-grid">
+            ${statRow('Possession',s.home.possession+'%',s.away.possession+'%',s.home.possession,s.away.possession)}
+            ${statRow('Shots',s.home.shots,s.away.shots,s.home.shots,s.away.shots)}
+            ${statRow('Shots on Target',s.home.sot,s.away.sot,s.home.sot,s.away.sot)}
+            ${statRow('Pass Accuracy',s.home.passAcc+'%',s.away.passAcc+'%',s.home.passAcc,s.away.passAcc)}
+            ${statRow('Passes',s.home.passComp+'/'+s.home.passAtt, s.away.passComp+'/'+s.away.passAtt, s.home.passComp, s.away.passComp)}
+          </div>
+        </div>
+        <div>
+          <h3>Match Events</h3>
+          <div class="log-box">
+            ${res.log.map(l=>`<div class="log-${l.type}">${l.min>0?`<span style="color:#8b949e;font-size:.75rem">${String(l.min).padStart(2,"0")}'</span> `:''}${l.msg}</div>`).join('')||'<span class="log-info">No notable events logged.</span>'}
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function statRow(label, hv, av, hn, an){
+  const total = (parseFloat(hn)||0)+(parseFloat(an)||0)||1;
+  const hp = Math.round((parseFloat(hn)||0)/total*100);
+  return `
+    <div class="stat-home">${hv}</div>
+    <div class="stat-label">${label}<div class="bar-wrap" style="margin-top:3px"><div class="bar-h" style="width:${hp}%"></div><div class="bar-a" style="width:${100-hp}%"></div></div></div>
+    <div class="stat-away">${av}</div>`;
+}
+
+// ─────────────────────────────────────────────
+//  League
+// ─────────────────────────────────────────────
+function runLeague(){
+  const mode     = document.getElementById('league-mode').value;
+  const learning = document.getElementById('league-learning').value==='1';
+  const seed     = Date.now();
+  const rng      = makeRng(seed);
+  const ts       = cloneTeams();
+
+  const standings = {};
+  ts.forEach(t=>{ standings[t.name]={P:0,W:0,D:0,L:0,GF:0,GA:0,GD:0,Pts:0}; });
+  const startStats = {}; ts.forEach(t=>{ startStats[t.name]={rating:t.rating,pace:t.pace,passing:t.passing,shooting:t.shooting,defending:t.defending,stamina:t.stamina}; });
+  const results=[];
+
+  let fixtures=[];
+  for(let i=0;i<ts.length;i++)
+    for(let j=0;j<ts.length;j++)
+      if(mode==='season'?i!==j:i<j) fixtures.push([i,j]);
+
+  // shuffle
+  for(let i=fixtures.length-1;i>0;i--){
+    const j=Math.floor(rng()*(i+1));
+    [fixtures[i],fixtures[j]]=[fixtures[j],fixtures[i]];
+  }
+
+  for(const [hi,ai] of fixtures){
+    const h=ts[hi], a=ts[ai];
+    const mRng=makeRng(Math.floor(rng()*2**31));
+    const res=simulateMatch(h,a,mRng,false);
+    results.push({...res,hName:h.name,aName:a.name,hIdx:hi,aIdx:ai});
+
+    const sH=standings[h.name], sA=standings[a.name];
+    sH.P++; sA.P++;
+    sH.GF+=res.homeGoals; sH.GA+=res.awayGoals;
+    sA.GF+=res.awayGoals; sA.GA+=res.homeGoals;
+    if(res.homeGoals>res.awayGoals){sH.W++;sA.L++;sH.Pts+=3;}
+    else if(res.awayGoals>res.homeGoals){sA.W++;sH.L++;sA.Pts+=3;}
+    else{sH.D++;sA.D++;sH.Pts++;sA.Pts++;}
+    sH.GD=sH.GF-sH.GA; sA.GD=sA.GF-sA.GA;
+
+    if(learning){ learnTeam(h,res,'home',mRng); learnTeam(a,res,'away',mRng); }
+  }
+
+  const table=ts.map(t=>({...standings[t.name],name:t.name,t}))
+    .sort((a,b)=>b.Pts-a.Pts||b.GD-a.GD||b.GF-a.GF||a.name.localeCompare(b.name));
+
+  renderLeague(table, results, learning, startStats, ts);
+}
+
+function renderLeague(table, results, learning, startStats, endTeams){
+  const posClass = i=>i===0?'pos-1':i===1?'pos-2':i===2?'pos-3':'';
+  const rows=table.map((r,i)=>`
+    <tr>
+      <td class="${posClass(i)}">${i+1}</td>
+      <td style="display:flex;align-items:center;gap:8px">
+        <div class="team-badge" style="background:${teamColor(endTeams.findIndex(t=>t.name===r.name))};width:28px;height:28px;font-size:.85rem">${r.name[0]}</div>${r.name}
+      </td>
+      <td>${r.P}</td><td>${r.W}</td><td>${r.D}</td><td>${r.L}</td>
+      <td>${r.GF}</td><td>${r.GA}</td>
+      <td>${r.GD>=0?'+'+r.GD:r.GD}</td>
+      <td class="pts">${r.Pts}</td>
+    </tr>`).join('');
+
+  let growthHtml='';
+  if(learning){
+    const attrs=['rating','pace','passing','shooting','defending','stamina'];
+    const gRows=endTeams.map(t=>{
+      const st=startStats[t.name];
+      const cells=attrs.map(a=>{
+        const d=t[a]-st[a]; const fmt=d>=0?`+${d.toFixed(1)}`:d.toFixed(1);
+        return `<td class="${d>0.05?'growth-up':d<-0.05?'growth-dn':'growth-neu'}">${t[a].toFixed(1)} <small>(${fmt})</small></td>`;
+      }).join('');
+      return `<tr><td style="display:flex;align-items:center;gap:8px"><div class="team-badge" style="background:${teamColor(endTeams.indexOf(t))};width:24px;height:24px;font-size:.75rem">${t.name[0]}</div>${t.name}</td>${cells}</tr>`;
+    }).join('');
+    growthHtml=`
+      <div class="card" style="margin-top:0">
+        <h2>Team Growth (Learning)</h2>
+        <table><thead><tr><th>Team</th>${attrs.map(a=>`<th>${a.charAt(0).toUpperCase()+a.slice(1)}</th>`).join('')}</tr></thead><tbody>${gRows}</tbody></table>
+      </div>`;
+  }
+
+  const recent=results.slice(-10).reverse().map(r=>`
+    <div class="fixture">
+      <div class="fixture-team fixture-home">${r.hName}</div>
+      <div class="fixture-score">${r.homeGoals} – ${r.awayGoals}</div>
+      <div class="fixture-team fixture-away">${r.aName}</div>
+    </div>`).join('');
+
+  const totalGoals=results.reduce((s,r)=>s+r.homeGoals+r.awayGoals,0);
+
+  document.getElementById('league-result').innerHTML=`
+    <div class="grid2" style="align-items:start">
+      <div>
+        <div class="card">
+          <h2>🏆 Final Standings</h2>
+          <table>
+            <thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+          <div style="margin-top:12px;font-size:.82rem;color:#8b949e">
+            ${results.length} matches · ${totalGoals} goals · avg ${(totalGoals/results.length).toFixed(2)}/game
+          </div>
+        </div>
+        ${growthHtml}
+      </div>
+      <div class="card">
+        <h2>Recent Results</h2>
+        ${recent}
+      </div>
+    </div>`;
+}
+
+// ─────────────────────────────────────────────
+//  Tournament
+// ─────────────────────────────────────────────
+function runTournament(){
+  const seed=Date.now();
+  const rng=makeRng(seed);
+  let contenders=cloneTeams();
+
+  // shuffle
+  for(let i=contenders.length-1;i>0;i--){
+    const j=Math.floor(rng()*(i+1));
+    [contenders[i],contenders[j]]=[contenders[j],contenders[i]];
+  }
+
+  const rounds=[];
+  let roundNum=1;
+  while(contenders.length>1){
+    const roundResults=[];
+    const next=[];
+    if(contenders.length%2===1){
+      const bye=contenders.pop();
+      roundResults.push({bye:true,winner:bye,home:bye,away:null,hg:null,ag:null,pen:null});
+      next.push(bye);
+    }
+    for(let i=0;i<contenders.length;i+=2){
+      const h=contenders[i], a=contenders[i+1];
+      const mRng=makeRng(Math.floor(rng()*2**31));
+      const res=simulateMatch(h,a,mRng,false);
+      let winner,pen=null;
+      if(res.homeGoals>res.awayGoals) winner=h;
+      else if(res.awayGoals>res.homeGoals) winner=a;
+      else { winner=rng()<0.5?h:a; pen=winner.name; }
+      roundResults.push({bye:false,home:h,away:a,hg:res.homeGoals,ag:res.awayGoals,winner,pen});
+      next.push(winner);
+    }
+    rounds.push({num:roundNum,results:roundResults});
+    contenders=next;
+    roundNum++;
+  }
+  renderTournament(rounds, contenders[0]);
+}
+
+function roundName(num, total){
+  const rem=total-num;
+  if(rem===0) return 'Final';
+  if(rem===1) return 'Semi-Finals';
+  if(rem===2) return 'Quarter-Finals';
+  return `Round ${num}`;
+}
+
+function renderTournament(rounds, champion){
+  const total=rounds.length;
+  const html=rounds.map(r=>{
+    const fixtures=r.results.map(f=>{
+      if(f.bye) return `<div class="fixture"><div style="color:#8b949e">${f.home.name} — BYE</div></div>`;
+      const pen=f.pen?`<span style="font-size:.75rem;color:#a371f7">(pens: ${f.pen})</span>`:'';
+      const wi=teams.findIndex(t=>t.name===f.winner.name);
+      return `<div class="fixture">
+        <div class="fixture-team fixture-home" style="font-weight:${f.winner===f.home?700:400}">${f.home.name}</div>
+        <div class="fixture-score">${f.hg} – ${f.ag} ${pen}</div>
+        <div class="fixture-team fixture-away" style="font-weight:${f.winner===f.away?700:400}">${f.away.name}</div>
+        <div style="margin-left:10px"><span class="tag" style="background:#1a2d1a;color:#3fb950">→ ${f.winner.name}</span></div>
+      </div>`;
+    }).join('');
+    return `<div class="card"><div class="round-title">${roundName(r.num,total)}</div>${fixtures}</div>`;
+  }).join('');
+
+  const ci=teams.findIndex(t=>t.name===champion.name);
+  document.getElementById('tournament-result').innerHTML=`
+    <div style="text-align:center;background:linear-gradient(135deg,#21262d,#161b22);border:1px solid #2ea043;border-radius:12px;padding:22px;margin-bottom:18px">
+      <div style="font-size:2.5rem">🏆</div>
+      <div style="font-size:1.5rem;font-weight:800;color:#f1c40f;margin-top:6px">${champion.name}</div>
+      <div style="color:#8b949e;font-size:.88rem;margin-top:4px">Cup Champion</div>
+    </div>
+    ${html}`;
+}
+
+// ─────────────────────────────────────────────
+//  Team Editor
+// ─────────────────────────────────────────────
+function renderTeamEditor(){
+  const el=document.getElementById('team-editor');
+  el.innerHTML=teams.map((t,i)=>`
+    <div class="card" style="border-color:${teamColor(i)}33;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <div class="team-badge" style="background:${teamColor(i)};width:44px;height:44px;font-size:1.2rem">${t.name[0]}</div>
+        <input type="text" value="${t.name}" style="font-size:1rem;font-weight:600;width:160px" onchange="teams[${i}].name=this.value;renderPickers()">
+        <div style="margin-left:auto;display:flex;gap:6px">
+          ${['attacking','balanced','defensive'].map(tac=>`<button class="tactic-btn ${t.tactic===tac?'sel':''}" onclick="teams[${i}].tactic='${tac}';renderTeamEditor();renderPickers()">${tac}</button>`).join('')}
+          ${teams.length>2?`<button class="btn btn-red btn-sm" onclick="removeTeam(${i})">✕</button>`:''}
+        </div>
+      </div>
+      <div class="grid3">
+        ${['rating','pace','passing','shooting','defending','stamina'].map(attr=>`
+          <div>
+            <label>${attr.charAt(0).toUpperCase()+attr.slice(1)}</label>
+            <div class="range-row">
+              <input type="range" min="30" max="99" value="${Math.round(t[attr])}" oninput="teams[${i}].${attr}=+this.value;this.nextElementSibling.textContent=this.value;renderPickers()">
+              <span class="range-val">${Math.round(t[attr])}</span>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function addTeam(){
+  teams.push({name:'Team '+(teams.length+1),rating:55,tactic:'balanced',policy:'strength_aware',pace:60,passing:60,shooting:60,defending:60,stamina:60});
+  renderTeamEditor();
+  renderPickers();
+}
+function removeTeam(i){
+  teams.splice(i,1);
+  if(window.homeSel>=teams.length) window.homeSel=0;
+  if(window.awaySel>=teams.length) window.awaySel=1;
+  renderTeamEditor();
+  renderPickers();
+}
+</script>
+</body>
+</html>
