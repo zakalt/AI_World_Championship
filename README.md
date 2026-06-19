@@ -55,6 +55,9 @@ Early-stage concept / prototype in development.
 
 Quickstart
 
+CREATOR : ZAKARIA RAHMANI
+EMAIL: ZAKARIARAHMANI2325@GMAIL.COM
+
 1. Run the CLI example:
 
 ```bash
